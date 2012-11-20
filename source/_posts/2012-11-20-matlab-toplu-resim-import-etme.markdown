@@ -36,14 +36,17 @@ imagelist3 = dir(fullfile(imagepath,patternname3));
 parfor k=1:numel(imagelist1)
     varpng = imread(fullfile(imagepath,imagelist1(k).name));
     varjpg1 = imwrite(var1 , imagelist1(k)+'.jpg' , 100);
+    % dosyaya yazın veya başka değişkene kopyalayın
 end
 parfor k=1:numel(imagelist2)
     varbmp = imread(fullfile(imagepath,imagelist2(k).name));
-    varjpg1 = imwrite(var1 , imagelist2(k)+'.jpg' , 100);
+    varjpg2 = imwrite(var1 , imagelist2(k)+'.jpg' , 100);
+     % dosyaya yazın veya başka değişkene kopyalayın
 end
 parfor k=1:numel(imagelist3)
     vartiff = imread(fullfile(imagepath,imagelist3(k).name));
-    varjpg1 = imwrite(var1 , imagelist3(k)+'.jpg' , 100);
+    varjpg3 = imwrite(var1 , imagelist3(k)+'.jpg' , 100);
+     % dosyaya yazın veya başka değişkene kopyalayın
 end
 
 
