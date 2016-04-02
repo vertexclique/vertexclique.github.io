@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>Attic Workspace</title>
-  <subtitle>Different barb, same wire — Onlar derler / They say / Они говорят</subtitle>
+  <title>Mahmut Bulut</title>
+  
   <link href="/atom.xml" rel="self"/>
   
-  <link href="http://vertexclique.com/"/>
+  <link href="http://vertexclique.github.io/"/>
   <updated>2016-04-01T13:25:47.000Z</updated>
-  <id>http://vertexclique.com/</id>
+  <id>http://vertexclique.github.io/</id>
   
   <author>
     <name>Mahmut Bulut (vertexclique)</name>
@@ -17,8 +17,8 @@
   
   <entry>
     <title>Hello World</title>
-    <link href="http://vertexclique.com/2016/04/01/hello-world/"/>
-    <id>http://vertexclique.com/2016/04/01/hello-world/</id>
+    <link href="http://vertexclique.github.io/2016/04/01/hello-world/"/>
+    <id>http://vertexclique.github.io/2016/04/01/hello-world/</id>
     <published>2016-04-01T13:25:47.000Z</published>
     <updated>2016-04-01T13:25:47.000Z</updated>
     
