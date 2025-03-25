@@ -243,19 +243,6 @@ To avoid redundant compilation of identical queries, we implement a bytecode cac
 
 This approach significantly improves performance for repeated queries.
 
-## Error Handling
-
-Robust error handling is a key design principle in ScramVM. We use a structured error handling system with specific error types for different components:
-
-- **SqlParseError**: For SQL syntax issues
-- **PlanningError**: For errors during plan generation
-- **ExecutionError**: For runtime execution failures
-- **TyperError**: For type system issues
-- **CompilationError**: For bytecode/LLVM compilation problems
-
-This granular approach helps identify and debug issues quickly.
-
-
 ## Benchmarking: The 1 Billion Row Challenge
 
 To demonstrate ScramVM's capabilities, we put it to the test against the [1 Billion Row Challenge (1BRC)](https://github.com/gunnarmorling/1brc) - a popular benchmark that tests the performance of data processing systems on a weather station dataset with one billion rows. And here is the query given to **ScramVM**:
