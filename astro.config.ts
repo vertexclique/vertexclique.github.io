@@ -4,14 +4,19 @@ import expressiveCode from 'astro-expressive-code';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import spectre from './package/src';
+import remarkMermaid from 'remark-mermaidjs';
 
 import node from '@astrojs/node';
 import { spectreDark } from './src/ec-theme';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://vertexclique.com',
+  site: 'https://vertexclique.github.io',
   output: 'static',
+  markdown: {
+    // Applied to .md and .mdx files
+    remarkPlugins: [remarkMermaid],
+  },
   integrations: [
     expressiveCode({
       themes: [spectreDark],
