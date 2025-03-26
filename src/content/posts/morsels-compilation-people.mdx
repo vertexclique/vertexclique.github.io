@@ -123,7 +123,7 @@ The heart of ScramVM is its execution engine, which comprises two main component
 
 What makes ScramVM's execution special is its morsel-driven parallel execution model. Rather than the traditional exchange-based parallelism where operators push or pull data between threads, we use a morsel-driven approach.
 
-> Our beloved [Datafusion](https://github.com/apache/datafusion) (yes beloved, because I used and developed Arrow Rust & Datafusion and contributed some parts of it), is working on push/pull volcano model. We are not following the same route but trying to use [this](https://db.in.tum.de/~leis/papers/morsels.pdf) approach.
+> Our beloved [Datafusion](https://github.com/apache/datafusion) (yes beloved, because I used and developed Arrow Rust & Datafusion and contributed some parts of it), is working on push/pull volcano model. We are not following the same route but trying to use [this](https://db.in.tum.de/~leis/papers/morsels.pdf) approach in a different way than how it is envisioned originally.
 
 ```mermaid
 %%{init: {'theme':'dark'}}%%
