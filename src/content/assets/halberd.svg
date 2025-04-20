@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="500" viewBox="0 0 150 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .shaft { fill: #6b4f3a; stroke: #4d382a; stroke-width: 1; }
+      .metal-dark { fill: #888; stroke: #444; stroke-width: 0.7; }
+      .metal-medium { fill: #aaa; stroke: #555; stroke-width: 0.7; }
+      .metal-bright { fill: #ccc; stroke: #666; stroke-width: 0.7; }
+      .accent-brass { fill: #DAA520; stroke: #b8860b; stroke-width: 0.5; }
+      .cog-teeth { fill: #888; stroke: #444; stroke-width: 0.5; }
+    </style>
+  </defs>
+
+  <g id="fancy-halberd-with-cogs" transform="translate(75, 230) scale(1, -1)"> <rect class="shaft" x="-5" y="0" width="10" height="200" rx="1" ry="1"/>
+    <rect class="metal-dark" x="-6" y="180" width="12" height="8" rx="1"/>
+    <rect class="metal-dark" x="-6" y="150" width="12" height="5" rx="1"/>
+    <rect class="metal-dark" x="-6" y="5" width="12" height="5" rx="1"/>
+
+    <g transform="translate(0, 200)"> <circle class="metal-dark" cx="0" cy="0" r="18"/>
+      <circle class="accent-brass" cx="0" cy="0" r="12"/>
+      <path class="cog-teeth" d="M 0 16 L 3 19 L 0 22 L -3 19 Z"/>
+      <path class="cog-teeth" d="M 16 0 L 19 -3 L 22 0 L 19 3 Z"/>
+      <path class="cog-teeth" d="M 0 -16 L -3 -19 L 0 -22 L 3 -19 Z"/>
+      <path class="cog-teeth" d="M -16 0 L -19 3 L -22 0 L -19 -3 Z"/>
+      <path class="cog-teeth" d="M 11.3 11.3 L 14.1 12.7 L 15.6 15.6 L 12.7 14.1 Z" transform="rotate(0)"/>
+      <path class="cog-teeth" d="M 11.3 11.3 L 14.1 12.7 L 15.6 15.6 L 12.7 14.1 Z" transform="rotate(90)"/>
+      <path class="cog-teeth" d="M 11.3 11.3 L 14.1 12.7 L 15.6 15.6 L 12.7 14.1 Z" transform="rotate(180)"/>
+      <path class="cog-teeth" d="M 11.3 11.3 L 14.1 12.7 L 15.6 15.6 L 12.7 14.1 Z" transform="rotate(270)"/>
+      <circle class="metal-dark" cx="0" cy="0" r="3"/>
+
+      <path class="metal-bright" d="M 0 15 L -8 45 L 0 55 L 8 45 Z"/>
+      <line x1="0" y1="18" x2="0" y2="48" stroke="#888" stroke-width="1"/>
+
+      <path class="metal-medium" d=" M -10 5
+                                     L -25 8
+                                     C -55 10, -65 35, -40 40
+                                     L -20 35
+                                     L -15 15 Z"/>
+      <path class="metal-dark" d="M -12 6 L -23 9 C -40 12, -45 28, -30 33 L -18 30 L -13 12 Z" fill="none"/>
+      <circle class="accent-brass" cx="-30" cy="25" r="5"/>
+       <path class="metal-dark" fill="#6b4f3a" d="M -30 22 L -32 25 L -30 28 L -28 25 Z"/>
+
+
+      <path class="metal-medium" d=" M 10 2
+                                     L 35 -15
+                                     C 45 -5, 30 15, 25 10
+                                     L 12 8 Z"/>
+       <path class="metal-dark" d="M 12 3 L 28 -10 C 35 -2, 25 10, 20 7 L 11 6 Z" fill="none"/>
+        <circle class="metal-dark" cx="15" cy="5" r="1.5"/>
+       <circle class="metal-dark" cx="20" cy="0" r="1.5"/>
+
+    </g>
+  </g>
+</svg>
