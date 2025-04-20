@@ -106,6 +106,7 @@ Once the parallel morsel processing is complete, the field commander (coordinato
 ```
 
 This centralized build/probe phase, executed efficiently on the coordinator, ensures data integrity and avoids the complexities of massively distributed hash tables, while still keeping all processing within your controlled environment.
+This centralized system can become **distributed** based on the workload and this part also adapts to the query shape.
 
 ### Phase 3: Adaptive Post-Processing (Tailored Local Execution)
 
@@ -163,7 +164,7 @@ The Halberd Join System's brilliance lies in how its efficiency translates direc
 | Traditional Volcano (PostgreSQL, Datafusion, Pandas, Polars) | Static partition  | Distributed    | Always parallel | Low          | Poor (Inefficient, Bottlenecks) |
 | Fully Distributed (SparkSQL, Trino, Tableau)   | Dynamic chunks    | Distributed    | Always parallel | Medium       | Moderate (High Overhead)      |
 | Centralized         | Dynamic chunks    | Centralized    | Always sequential | Low          | Limited (Sequential Bottleneck) |
-| **Halberd** (ScramDB) | Dynamic morsels   | Centralized    | Adaptive (seq/par) | **High** | **Excellent (Efficient & Secure)** |
+| **Halberd** (ScramDB) | Dynamic morsels   | Centralized OR Distributed    | Adaptive (seq/par) | **High** | **Excellent (Efficient & Secure)** |
 
 ## Conclusion: Secure Your Data, Unleash Your Insights with Halberd
 
