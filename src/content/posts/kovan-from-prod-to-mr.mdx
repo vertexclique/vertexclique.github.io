@@ -22,7 +22,7 @@ Here's what nobody tells you about lock-free data structures: they're amazing un
 Most Rust developers use `crossbeam-epoch` for memory reclamation. It's excellent engineering. Fast, battle-tested, the default choice. But it's **lock-free, not wait-free**. That sounds like splitting hairs until you're staring at production monitoring at 3am watching your 99.9th percentile latency spike from 5ms to 100ms and you have no idea why.
 
 ```mermaid
-%%{init: {'theme':'dark'}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#2a0a1a', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#FF5A32', 'lineColor': '#DD324A', 'secondaryColor': '#1a0a2a', 'tertiaryColor': '#121212', 'background': '#121212', 'mainBkg': '#1e0f1e', 'nodeBorder': '#FF5A32', 'clusterBkg': '#1a0818', 'titleColor': '#FF5A32', 'edgeLabelBackground': '#2a0a1a', 'actorBkg': '#2a0a1a', 'actorBorder': '#FF5A32', 'actorTextColor': '#ffffff', 'actorLineColor': '#B40068', 'signalColor': '#FF5A32', 'signalTextColor': '#ffffff', 'labelBoxBkgColor': '#701170', 'labelBoxBorderColor': '#FF5A32', 'labelTextColor': '#ffffff', 'loopTextColor': '#ffffff', 'noteBorderColor': '#FF5A32', 'noteBkgColor': '#2a0a1a', 'noteTextColor': '#FF5A32', 'activationBorderColor': '#DD324A', 'activationBkgColor': '#1a0818', 'sequenceNumberColor': '#FF5A32'}}}%%
 sequenceDiagram
     participant T1 as Thread 1
     participant T2 as Thread 2
@@ -30,24 +30,24 @@ sequenceDiagram
     participant Epoch as Epoch Counter
     participant Heap as Memory Heap
 
-    T1->>Epoch: pin() - enter epoch 5
-    T2->>Epoch: pin() - enter epoch 5
-    T3->>Epoch: pin() - enter epoch 3 ⚠️
+    T1->>Epoch: pin() — enter epoch 5
+    T2->>Epoch: pin() — enter epoch 5
+    T3->>Epoch: pin() — enter epoch 3 [stalled]
 
     Note over T3,Epoch: Thread 3 stalls in old epoch
 
-    T1->>Epoch: unpin() - advance
-    T2->>Epoch: unpin() - advance
+    T1->>Epoch: unpin() — advance
+    T2->>Epoch: unpin() — advance
 
-    Note over Epoch,Heap: Cannot reclaim epochs 3-5!
+    Note over Epoch,Heap: Cannot reclaim epochs 3–5!
 
     loop Memory grows unbounded
         T1->>Heap: allocate (can't free)
         T2->>Heap: allocate (can't free)
-        Heap-->>Heap: 📈 Growing...
+        Heap-->>Heap: Growing...
     end
 
-    Note over T1,Heap: 3am: "Why is our heap at 32GB?"
+    Note over T1,Heap: 3am — "Why is our heap at 32GB?"
 ```
 
 Lock-free means *the system* makes progress. But individual threads? They can starve indefinitely. A single stalled thread in epoch-based reclamation blocks memory reclamation for **everyone**. Memory usage becomes unbounded. Your carefully tuned heap starts growing. The garbage collector you don't have can't save you.
@@ -61,21 +61,34 @@ Lock-free means *the system* makes progress. But individual threads? They can st
 You need stronger guarantees. **Wait-freedom**: every operation completes in bounded time, period. No starvation. No unbounded memory. No "usually works." *Provably* works.
 
 ```mermaid
-%%{init: {'theme':'dark'}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#2a0a1a', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#FF5A32', 'lineColor': '#B40068', 'secondaryColor': '#1a0a2a', 'tertiaryColor': '#701170', 'background': '#121212', 'mainBkg': '#1e0f1e', 'nodeBorder': '#FF5A32', 'clusterBkg': '#1a0818', 'clusterBorder': '#DD324A', 'titleColor': '#FF5A32', 'edgeLabelBackground': '#2a0a1a', 'fontFamily': 'monospace'}}}%%
 graph LR
-    subgraph "❌ Lock-Free (crossbeam-epoch)"
-        LF1[Thread A] -->|may starve| LFP[Progress?]
-        LF2[Thread B] -->|may starve| LFP
-        LF3[Thread C] -->|blocks all| LFP
-        LFP -->|"unbounded latency"| LFR[Result]
+    subgraph LF["Lock-Free — crossbeam-epoch"]
+        LF1["Thread A"] -->|"may starve"| LFP["Progress?"]
+        LF2["Thread B"] -->|"may starve"| LFP
+        LF3["Thread C"] -->|"blocks all"| LFP
+        LFP -->|"unbounded latency"| LFR["Result"]
     end
 
-    subgraph "✅ Wait-Free (Kovan)"
-        WF1[Thread A] -->|bounded time| WFP[Progress ✓]
-        WF2[Thread B] -->|bounded time| WFP
-        WF3[Thread C] -->|bounded time| WFP
-        WFP -->|"guaranteed latency"| WFR[Result]
+    subgraph WF["Wait-Free — Kovan"]
+        WF1["Thread A"] -->|"bounded time"| WFP["Progress"]
+        WF2["Thread B"] -->|"bounded time"| WFP
+        WF3["Thread C"] -->|"bounded time"| WFP
+        WFP -->|"guaranteed latency"| WFR["Result"]
     end
+
+    style LF fill:#2a0818,stroke:#DD324A,color:#ffffff
+    style WF fill:#0a1a0a,stroke:#FF5A32,color:#ffffff
+    style LFP fill:#701170,stroke:#B40068,color:#ffffff
+    style LFR fill:#3a0a0a,stroke:#DD324A,color:#FF5A32
+    style WFP fill:#1a4a1a,stroke:#FF5A32,color:#ffffff
+    style WFR fill:#0a2a0a,stroke:#FF5A32,color:#FF5A32
+    style LF1 fill:#2a0a1a,stroke:#DD324A,color:#ffffff
+    style LF2 fill:#2a0a1a,stroke:#DD324A,color:#ffffff
+    style LF3 fill:#3a0a0a,stroke:#B40068,color:#ffffff
+    style WF1 fill:#1e0f1e,stroke:#FF5A32,color:#ffffff
+    style WF2 fill:#1e0f1e,stroke:#FF5A32,color:#ffffff
+    style WF3 fill:#1e0f1e,stroke:#FF5A32,color:#ffffff
 ```
 
 I found *"Crystalline: Fast and Memory Efficient Wait-Free Reclamation"* by Nikolaev & Ravindran ([DISC 2021](https://arxiv.org/abs/2108.02763)). Beautiful paper. Formal proofs of wait-freedom and bounded memory. Benchmarks showing performance on par with or better than epoch-based reclamation, especially for read-heavy workloads.
@@ -89,25 +102,39 @@ But papers aren't code. The gap between "theoretically sound" and "actually runs
 [Kovan](https://github.com/vertexclique/kovan) implements Crystalline in Rust without compromising on safety or performance:
 
 ```mermaid
-%%{init: {'theme':'dark'}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#2a0a1a', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#FF5A32', 'lineColor': '#FF5A32', 'secondaryColor': '#1a0a2a', 'tertiaryColor': '#701170', 'background': '#121212', 'mainBkg': '#1e0f1e', 'nodeBorder': '#FF5A32', 'clusterBkg': '#1a0818', 'clusterBorder': '#DD324A', 'titleColor': '#FF5A32', 'edgeLabelBackground': '#2a0a1a'}}}%%
 graph TD
-    subgraph "Kovan Architecture"
-        PA["portable-atomic<br/>AtomicU128"] --> SLOTS["Slot-Based<br/>Architecture"]
-        SLOTS --> BR["Batch<br/>Retirement"]
-        BR --> RECLAIM["Wait-Free<br/>Reclamation"]
+    subgraph ARCH["Kovan Architecture"]
+        PA["portable-atomic / AtomicU128"] --> SLOTS["Slot-Based Architecture"]
+        SLOTS --> BR["Batch Retirement"]
+        BR --> RECLAIM["Wait-Free Reclamation"]
     end
 
-    subgraph "Hardware Backends"
-        PA --> X86["x86-64<br/>cmpxchg16b"]
-        PA --> ARM["ARM64<br/>CASP"]
-        PA --> TSX["TSX / TME<br/>(where available)"]
+    subgraph HW["Hardware Backends"]
+        PA --> X86["x86-64 / cmpxchg16b"]
+        PA --> ARM["ARM64 / CASP"]
+        PA --> TSX["TSX / TME"]
     end
 
-    subgraph "Guarantees"
-        RECLAIM --> G1["✓ Bounded Memory"]
-        RECLAIM --> G2["✓ Wait-Free Progress"]
-        RECLAIM --> G3["✓ Zero Read Overhead"]
+    subgraph GU["Guarantees"]
+        RECLAIM --> G1["Bounded Memory"]
+        RECLAIM --> G2["Wait-Free Progress"]
+        RECLAIM --> G3["Zero Read Overhead"]
     end
+
+    style ARCH fill:#1a0818,stroke:#FF5A32,color:#ffffff
+    style HW fill:#1a0a2a,stroke:#B40068,color:#ffffff
+    style GU fill:#0a1a0a,stroke:#FF5A32,color:#ffffff
+    style PA fill:#B40068,stroke:#FF5A32,color:#ffffff
+    style SLOTS fill:#701170,stroke:#FF5A32,color:#ffffff
+    style BR fill:#701170,stroke:#FF5A32,color:#ffffff
+    style RECLAIM fill:#DD324A,stroke:#FF5A32,color:#ffffff
+    style X86 fill:#2a0a1a,stroke:#B40068,color:#ffffff
+    style ARM fill:#2a0a1a,stroke:#B40068,color:#ffffff
+    style TSX fill:#2a0a1a,stroke:#B40068,color:#ffffff
+    style G1 fill:#1a4a1a,stroke:#FF5A32,color:#ffffff
+    style G2 fill:#1a4a1a,stroke:#FF5A32,color:#ffffff
+    style G3 fill:#1a4a1a,stroke:#FF5A32,color:#ffffff
 ```
 
 - **`portable-atomic`** for cross-platform `AtomicU128` (`cmpxchg16b` on x86-64, `CASP` on ARM64)
@@ -131,23 +158,35 @@ graph TD
 Memory reclamation is plumbing. It only matters if you can build real systems on top. So Kovan became a family:
 
 ```mermaid
-%%{init: {'theme':'dark'}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#2a0a1a', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#FF5A32', 'lineColor': '#FF5A32', 'secondaryColor': '#1a0a2a', 'tertiaryColor': '#701170', 'background': '#121212', 'mainBkg': '#1e0f1e', 'nodeBorder': '#FF5A32', 'clusterBkg': '#1a0818', 'clusterBorder': '#DD324A', 'titleColor': '#FF5A32', 'edgeLabelBackground': '#2a0a1a'}}}%%
 graph TD
-    CORE["🏗️ kovan<br/>Wait-Free Memory Reclamation"] --> MAP["kovan-map<br/>Lock-Free HashMap"]
-    CORE --> CHAN["kovan-channel<br/>MPMC Channels"]
-    CORE --> QUEUE["kovan-queue<br/>Lock-Free Queues"]
-    CORE --> MVCC["kovan-mvcc<br/>Multi-Version<br/>Concurrency Control"]
-    CORE --> STM["kovan-stm<br/>Software<br/>Transactional Memory"]
+    CORE["kovan: Wait-Free Memory Reclamation"] --> MAP["kovan-map: Wait-Free HashMap"]
+    CORE --> CHAN["kovan-channel: Wait-Free MPMC Channels"]
+    CORE --> QUEUE["kovan-queue: Wait-Free Queues"]
+    CORE --> MVCC["kovan-mvcc: Multi-Version Concurrency Control"]
+    CORE --> STM["kovan-stm: Software Transactional Memory"]
 
-    MVCC --> LEVER["🔧 Next-Gen Lever<br/>Transactional In-Memory DB"]
+    MVCC --> LEVER["Next-Gen Lever: Transactional In-Memory DB"]
 
-    MAP --> STRESS1["Validates: ordered lists<br/>under contention"]
-    CHAN --> STRESS2["Validates: retirement<br/>under bursty loads"]
-    QUEUE --> STRESS3["Validates: rapid<br/>alloc/dealloc cycles"]
-    MVCC --> STRESS4["Validates: transaction isolation<br/>concurrent R/W"]
+    MAP --> STRESS1["Validates: wait-free ordered lists under contention"]
+    CHAN --> STRESS2["Validates: wait-free retirement under bursty loads"]
+    QUEUE --> STRESS3["Validates: rapid alloc/dealloc cycles"]
+    MVCC --> STRESS4["Validates: transaction isolation / concurrent R/W"]
+
+    style CORE fill:#B40068,stroke:#FF5A32,color:#ffffff
+    style MAP fill:#701170,stroke:#FF5A32,color:#ffffff
+    style CHAN fill:#701170,stroke:#FF5A32,color:#ffffff
+    style QUEUE fill:#701170,stroke:#FF5A32,color:#ffffff
+    style MVCC fill:#701170,stroke:#FF5A32,color:#ffffff
+    style STM fill:#701170,stroke:#FF5A32,color:#ffffff
+    style LEVER fill:#DD324A,stroke:#FF5A32,color:#ffffff
+    style STRESS1 fill:#2a0a1a,stroke:#B40068,color:#cccccc
+    style STRESS2 fill:#2a0a1a,stroke:#B40068,color:#cccccc
+    style STRESS3 fill:#2a0a1a,stroke:#B40068,color:#cccccc
+    style STRESS4 fill:#2a0a1a,stroke:#B40068,color:#cccccc
 ```
 
-Each library stress-tests different parts of the guarantee. The HashMap validates lock-free ordered lists under contention. MVCC tests transaction isolation with concurrent readers and writers. Channels test retirement under bursty loads. The queue tests the pathological cases — rapid allocation/deallocation cycles that break naive schemes.
+Each library stress-tests different parts of the guarantee. Wait-free reclamation is a prerequisite for wait-free data structures, but not sufficient on its own — the data structure's own algorithm must also provide wait-free progress. Every library in this ecosystem satisfies both requirements. The HashMap validates wait-free progress under ordered-list contention. MVCC tests transaction isolation with concurrent readers and writers. Channels test retirement under bursty loads. The queue targets the pathological cases — rapid allocation/deallocation cycles that break naive schemes.
 
 All of them share the same foundation: **wait-free progress, bounded memory, predictable latency.**
 
@@ -156,21 +195,21 @@ All of them share the same foundation: **wait-free progress, bounded memory, pre
 This isn't theoretical. Here's where wait-free guarantees matter:
 
 ```mermaid
-%%{init: {'theme':'dark'}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#2a0a1a', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#FF5A32', 'lineColor': '#DD324A', 'secondaryColor': '#1a0a2a', 'tertiaryColor': '#701170', 'background': '#121212', 'mainBkg': '#1e0f1e', 'nodeBorder': '#FF5A32', 'clusterBkg': '#1a0818', 'clusterBorder': '#DD324A', 'titleColor': '#FF5A32', 'edgeLabelBackground': '#2a0a1a'}}}%%
 graph LR
-    subgraph "The Problem"
-        P1["Unbounded<br/>epoch delays"]
-        P2["Thread<br/>starvation"]
-        P3["Memory<br/>growth"]
+    subgraph PROB["The Problem"]
+        P1["Unbounded epoch delays"]
+        P2["Thread starvation"]
+        P3["Memory growth"]
     end
 
-    subgraph "Domains at Risk"
-        D1["☁️ Cloud Services<br/>SLA: 99.9% < 10ms"]
-        D2["💹 Financial Trading<br/>Regulatory compliance"]
-        D3["📊 Real-Time Analytics<br/>Dashboard freshness"]
-        D4["🖥️ HPC Simulations<br/>Memory quotas"]
-        D5["🗄️ Distributed DBs<br/>Consistency protocols"]
-        D6["🔎 Query Engines & DBs<br/>Read-heavy internals"]
+    subgraph DOM["Domains at Risk"]
+        D1["Cloud Services — SLA: 99.9% under 10ms"]
+        D2["Financial Trading — Regulatory compliance"]
+        D3["Real-Time Analytics — Dashboard freshness"]
+        D4["HPC Simulations — Memory quotas"]
+        D5["Distributed DBs — Consistency protocols"]
+        D6["Query Engines — Read-heavy internals"]
     end
 
     P1 --> D1
@@ -180,6 +219,18 @@ graph LR
     P2 --> D5
     P1 --> D6
     P3 --> D6
+
+    style PROB fill:#1a0818,stroke:#DD324A,color:#ffffff
+    style DOM fill:#1a0a2a,stroke:#FF5A32,color:#ffffff
+    style P1 fill:#701170,stroke:#B40068,color:#ffffff
+    style P2 fill:#701170,stroke:#B40068,color:#ffffff
+    style P3 fill:#701170,stroke:#B40068,color:#ffffff
+    style D1 fill:#2a0a1a,stroke:#FF5A32,color:#ffffff
+    style D2 fill:#2a0a1a,stroke:#FF5A32,color:#ffffff
+    style D3 fill:#2a0a1a,stroke:#FF5A32,color:#ffffff
+    style D4 fill:#2a0a1a,stroke:#FF5A32,color:#ffffff
+    style D5 fill:#2a0a1a,stroke:#FF5A32,color:#ffffff
+    style D6 fill:#DD324A,stroke:#FF5A32,color:#ffffff
 ```
 
 **Cloud Services** — Your SLA promises 99.9% of requests in 10ms. Unbounded epoch delays violate that. Your infrastructure costs money. Memory leaks from stalled reclamation cost *more* money.
@@ -195,24 +246,37 @@ graph LR
 **Query Engines & Databases** — This is the big one. Every modern database and query engine is fundamentally a read-heavy system. Think about it: even write-heavy OLTP workloads generate index lookups, constraint checks, and MVCC version traversals that *multiply every write into dozens of reads*. OLAP is even more extreme — a single analytical query scans millions of rows while writes trickle in. The internal data structures powering these systems — B-trees, skip lists, hash indexes, LSM memtables — are all concurrent structures that need safe memory reclamation under read-dominant access patterns.
 
 ```mermaid
-%%{init: {'theme':'dark'}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#2a0a1a', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#FF5A32', 'lineColor': '#FF5A32', 'secondaryColor': '#1a0a2a', 'tertiaryColor': '#701170', 'background': '#121212', 'mainBkg': '#1e0f1e', 'nodeBorder': '#FF5A32', 'clusterBkg': '#1a0818', 'clusterBorder': '#DD324A', 'titleColor': '#FF5A32', 'edgeLabelBackground': '#2a0a1a'}}}%%
 graph TD
-    subgraph "Query Engine Internals"
+    subgraph QEI["Query Engine Internals"]
         QUERY["Incoming Query"] --> PLAN["Query Planner"]
-        PLAN --> SCAN["Index Scan<br/>🔍 READ"]
-        PLAN --> HASH["Hash Join Build<br/>🔍 READ"]
-        PLAN --> AGG["Aggregation<br/>🔍 READ"]
-        SCAN --> CONC["Concurrent<br/>Index Structure"]
+        PLAN --> SCAN["Index Scan (READ)"]
+        PLAN --> HASH["Hash Join Build (READ)"]
+        PLAN --> AGG["Aggregation (READ)"]
+        SCAN --> CONC["Concurrent Index Structure"]
         HASH --> CONC
         AGG --> CONC
     end
 
-    subgraph "The Reclamation Problem"
-        CONC --> EP["Epoch-Based?"]
-        CONC --> WF["Wait-Free?"]
-        EP --> |"long-running scan<br/>holds epoch"| STALL["⚠️ All reclamation<br/>stalls"]
-        WF --> |"bounded per-op<br/>cost"| OK["✅ Predictable<br/>throughput"]
+    subgraph REC["The Reclamation Problem"]
+        CONC --> EP["Epoch-Based"]
+        CONC --> WF["Wait-Free"]
+        EP --> |"long-running scan holds epoch"| STALL["All reclamation stalls"]
+        WF --> |"bounded per-op cost"| OK["Predictable throughput"]
     end
+
+    style QEI fill:#1a0818,stroke:#DD324A,color:#ffffff
+    style REC fill:#1a0a2a,stroke:#FF5A32,color:#ffffff
+    style QUERY fill:#B40068,stroke:#FF5A32,color:#ffffff
+    style PLAN fill:#701170,stroke:#FF5A32,color:#ffffff
+    style SCAN fill:#2a0a1a,stroke:#FF5A32,color:#ffffff
+    style HASH fill:#2a0a1a,stroke:#FF5A32,color:#ffffff
+    style AGG fill:#2a0a1a,stroke:#FF5A32,color:#ffffff
+    style CONC fill:#FF5A32,stroke:#ffffff,color:#ffffff
+    style EP fill:#3a0a0a,stroke:#DD324A,color:#ffffff
+    style WF fill:#0a2a0a,stroke:#FF5A32,color:#ffffff
+    style STALL fill:#DD324A,stroke:#B40068,color:#ffffff
+    style OK fill:#1a4a1a,stroke:#FF5A32,color:#ffffff
 ```
 
 Consider what happens inside a database during a typical mixed workload:
