@@ -19,6 +19,10 @@ interface Props {
 }
 
 const { title, description, image, pagefindIgnore, article } = Astro.props;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') || '';
+const pageUrl = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = image?.src ? new URL(image.src, Astro.site).href : `${siteUrl}/img/og.png`;
 ---
 
 <!DOCTYPE html>
@@ -33,20 +37,21 @@ const { title, description, image, pagefindIgnore, article } = Astro.props;
 		{description && <meta name="description" content={description} />}
 		<meta name="theme-color" content={themeColor}>
 
-		<link rel="canonical" href={Astro.site} />
+		<link rel="canonical" href={pageUrl} />
 
-		<meta name="og:title" content={title} />
-		{description && <meta name="og:description" content={description} />}
-		<meta name="og:image" content={image?.src || '/img/og.png'} />
-		<meta name="image" property="og:image" content={image?.src || '/img/og.png'} />
-		<meta name="og:url" content={Astro.site} />
-		{!article && <meta name="og:type" content="website" />}
-		<meta name="og:locale" content="en" />
+		<meta property="og:title" content={title} />
+		{description && <meta property="og:description" content={description} />}
+		<meta property="og:image" content={ogImage} />
+		<meta property="og:url" content={pageUrl} />
+		{!article && <meta property="og:type" content="website" />}
+		<meta property="og:locale" content="en" />
 
 		{article && (
-			<meta name="og:type" content="article" />
-			<meta property="article:published_time" content={article.createdAt.toISOString()} />
-			<meta name="author" content={name} />
+			<>
+				<meta property="og:type" content="article" />
+				<meta property="article:published_time" content={article.createdAt.toISOString()} />
+				<meta property="article:author" content={name} />
+			</>
 		)}
 
 		{article && article.updatedAt && (
@@ -60,7 +65,7 @@ const { title, description, image, pagefindIgnore, article } = Astro.props;
 		)}
 		<meta name="twitter:title" content={title} />
 		{description && <meta name="twitter:description" content={description} />}
-		<meta name="twitter:image" content={image?.src || '/img/og.png'} />
+		<meta name="twitter:image" content={ogImage} />
 	</head>
 	<body>
 		<main data-pagefind-ignore={pagefindIgnore}>

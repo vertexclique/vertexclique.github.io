@@ -7,5 +7,14 @@
     },
     "text": "GitHub",
     "link": "https://github.com/vertexclique"
+  },
+  {
+    "id": 2,
+    "icon": {
+      "type": "simple-icons",
+      "name": "x"
+    },
+    "text": "X",
+    "link": "https://x.com/vertexclique"
   }
 ]

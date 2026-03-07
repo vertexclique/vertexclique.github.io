@@ -25,6 +25,7 @@ export default defineConfig({
     sitemap(),
     spectre({
       name: 'vertexclique',
+      twitterHandle: '@vertexclique',
       openGraph: {
         home: {
           title: 'Vertexclique - Blog',
