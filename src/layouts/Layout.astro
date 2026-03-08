@@ -42,6 +42,9 @@ const ogImage = image?.src ? new URL(image.src, Astro.site).href : `${siteUrl}/i
 		<meta property="og:title" content={title} />
 		{description && <meta property="og:description" content={description} />}
 		<meta property="og:image" content={ogImage} />
+		{image && <meta property="og:image:width" content={String(image.width)} />}
+		{image && <meta property="og:image:height" content={String(image.height)} />}
+		{image && <meta property="og:image:type" content={image.format === 'svg' ? 'image/svg+xml' : `image/${image.format}`} />}
 		<meta property="og:url" content={pageUrl} />
 		{!article && <meta property="og:type" content="website" />}
 		<meta property="og:locale" content="en" />
